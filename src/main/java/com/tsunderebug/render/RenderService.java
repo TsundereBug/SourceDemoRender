@@ -74,7 +74,19 @@ public class RenderService {
 							}
 							fos.close();
 							is.close();
-
+							g = Game.fromRemote(g);
+							String extension = ".exe";
+							String os = System.getProperty("os.name");
+							if(os.contains("mac") || os.contains("darwin")) {
+								extension = "_mac";
+							} else if (os.contains("win")) {
+								extension = ".exe";
+							} else if (os.contains("nix") || os.contains("nux")) {
+								extension = "_linux";
+							}
+							String executable = g.getPath() + "/" + g.getCode() + extension;
+							Process p = new ProcessBuilder(executable, "-hijack", "-textmode", "-console", "+sv_cheats 1", "+host_framerate 30", "+demo_quitafterplayback 1", "+startmovie\"" + f.getAbsolutePath() + "_\" raw", "+playdemo \"" + f.getAbsolutePath() + "\"").redirectOutput(ProcessBuilder.Redirect.INHERIT).start();
+							p.waitFor();
 						} catch (MalformedURLException e) {
 							b.write("MALFORMED");
 							b.newLine();
@@ -82,6 +94,14 @@ public class RenderService {
 							s.close();
 							br.close();
 							b.close();
+						} catch (InterruptedException e) {
+							b.write("INTERRUPT");
+							b.newLine();
+							b.flush();
+							s.close();
+							br.close();
+							b.close();
+							Thread.currentThread().interrupt();
 						}
 					}
 				} catch (IOException e) {
