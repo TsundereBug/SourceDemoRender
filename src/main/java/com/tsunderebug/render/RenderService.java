@@ -40,20 +40,20 @@ public class RenderService {
 			while (accept) {
 				try {
 					Socket s = server.accept();
+					System.out.println("Accepted " + s.getInetAddress().toString());
 					BufferedWriter b = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
 					InputStreamReader r = new InputStreamReader(s.getInputStream());
+					BufferedReader br = new BufferedReader(r);
 					b.write("GAME?");
 					b.newLine();
 					b.flush();
-					Gson gs = new Gson();
-					Game g = gs.fromJson(r, Game.class);
+					Game g = new Gson().fromJson(br.readLine(), Game.class);
 					if(!clients.containsKey(g)) {
 						clients.put(g, new ArrayDeque<>());
 					}
 					b.write("QUEUED: " + clients.get(g).size());
 					b.newLine();
 					b.flush();
-					BufferedReader br = new BufferedReader(r);
 					String l = br.readLine();
 					if("CLOSE".equals(l)) {
 						s.close();
@@ -62,13 +62,14 @@ public class RenderService {
 					} else {
 						try {
 							URL u = new URL(l);
+							DATA_DIR.mkdirs();
 							File f = new File(DATA_DIR, u.getPath().substring(u.getPath().lastIndexOf('/') + 1) + System.currentTimeMillis() + ".dem");
 							f.createNewFile();
 							FileOutputStream fos = new FileOutputStream(f);
 							HttpURLConnection huc = (HttpURLConnection) u.openConnection();
 							huc.addRequestProperty("User-Agent", "Mozilla/5.0 DemoRender/1.0");
 							InputStream is = huc.getInputStream();
-							byte[] buffer = new byte[1048576];
+							byte[] buffer = new byte[is.available()];
 							while(is.read(buffer) > 0) {
 								fos.write(buffer);
 							}
@@ -109,6 +110,7 @@ public class RenderService {
 				}
 			}
 		});
+		acceptanceThread.start();
 	}
 
 	public void stopAcceptance() {
