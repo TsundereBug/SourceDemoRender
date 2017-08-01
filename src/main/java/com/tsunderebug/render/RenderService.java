@@ -12,6 +12,7 @@ import java.util.Map;
 public class RenderService {
 
 	public static final int PORT = 12983;
+	public static final File DATA_DIR = new File(System.getProperty("user.home"), ".sourcerender");
 
 	private static RenderService ourInstance;
 
@@ -61,9 +62,19 @@ public class RenderService {
 					} else {
 						try {
 							URL u = new URL(l);
+							File f = new File(DATA_DIR, u.getPath().substring(u.getPath().lastIndexOf('/') + 1) + System.currentTimeMillis() + ".dem");
+							f.createNewFile();
+							FileOutputStream fos = new FileOutputStream(f);
 							HttpURLConnection huc = (HttpURLConnection) u.openConnection();
 							huc.addRequestProperty("User-Agent", "Mozilla/5.0 DemoRender/1.0");
-							// TODO
+							InputStream is = huc.getInputStream();
+							byte[] buffer = new byte[1048576];
+							while(is.read(buffer) > 0) {
+								fos.write(buffer);
+							}
+							fos.close();
+							is.close();
+
 						} catch (MalformedURLException e) {
 							b.write("MALFORMED");
 							b.newLine();
